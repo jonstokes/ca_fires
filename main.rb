@@ -30,6 +30,26 @@ core_counties_table.each do |county, fires|
   fires << { "Total" => total }
 end
 
+puts "\n\nCore County Totals:".upcase
 core_counties_table.each do |county, fires|
+  puts "#{county}: #{fires.last["Total"]}"
+end
+
+all_counties_table = {}
+table.each do |fire|
+  next unless fire["Counties"] && fire["Counties"].any?
+  fire["Counties"].each do |fire_county|
+    all_counties_table[fire_county] ||= []
+    all_counties_table[fire_county] << fire.dup
+  end
+end
+
+all_counties_table.each do |county, fires|
+  total = fires.map { |fire| (fire["AcresBurned"] || 0) }.compact.reduce(&:+)
+  fires << { "Total" => total }
+end
+
+puts "\n\nAll County Totals:".upcase
+all_counties_table.each do |county, fires|
   puts "#{county}: #{fires.last["Total"]}"
 end
