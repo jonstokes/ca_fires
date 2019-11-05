@@ -56,15 +56,19 @@ core_counties_list = [
 core_counties_table = all_counties_table.select { |k, v| k.in?(core_counties_list) }
 
 puts "\n\nCore County Totals:".upcase
+index = 1
 core_counties_table.each do |_, county|
-  puts "#{county.name}: #{county.total_acres_burned}"
+  puts "#{index}. #{county.name}: #{county.total_acres_burned}"
+  index += 1
 end
 grand_total = core_counties_table.map { |_, county| county.total_acres_burned }.reduce(&:+)
 puts "TOTAL ACRES BURNED: #{grand_total}"
 
 puts "\n\nAll County Totals:".upcase
+index = 1
 all_counties_table.each do |_, county|
-  puts "#{county.name}: #{county.total_acres_burned}"
+  puts "#{index}. #{county.name}: #{county.total_acres_burned}"
+  index += 1
 end
 grand_total = all_counties_table.map { |_, county| county.total_acres_burned }.reduce(&:+)
 puts "TOTAL ACRES BURNED: #{grand_total}"
