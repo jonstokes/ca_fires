@@ -2,9 +2,47 @@
 # pulled from https://fire.ca.gov/umbraco/Api/IncidentApi/GetIncidents?year=2019
 
 require "json"
+require "hashie"
+require "active_support/all"
+
+class Fire < Hashie::Mash
+  def initialize(hash)
+    super(
+      hash.dup.transform_keys { |k| k.underscore }
+    )
+  end
+end
+
+class County
+  attr_accessor :fires, :name
+
+  def initialize(name)
+    @name = name
+    @fires = []
+  end
+
+  def add_fire(fire)
+    @fires << fire if fire.present?
+  end
+
+  def total_acres_burned
+    fires.map { |fire| fire.acres_burned || 0 }.reduce(&:+)
+  end
+end
 
 file_data = File.read("./ca-fire-data-11-4-2019.json")
-table = JSON.parse(file_data)["Incidents"]
+fire_table = JSON.parse(file_data)["Incidents"].map { |fire| Fire.new(fire) }
+
+all_counties_table = {}
+fire_table.each do |fire|
+  next unless fire.counties.present?
+  fire.counties.each do |county_name|
+    all_counties_table[county_name] ||= County.new(county_name)
+    all_counties_table[county_name].add_fire(fire)
+  end
+end
+
+all_counties_table = all_counties_table.sort_by { |k, v| -v.total_acres_burned }.to_h
 
 core_counties_list = [
   "San Bernardino",
@@ -15,41 +53,14 @@ core_counties_list = [
   "Fresno"
 ]
 
-core_counties_table = {}
-core_counties_list.each { |county| core_counties_table.merge!(county => []) }
-
-table.each do |fire|
-  core_counties_table.each do |county, fire_list|
-    next unless fire["Counties"].include? county
-    fire_list << fire.dup
-  end
-end
-
-core_counties_table.each do |county, fires|
-  total = fires.map { |fire| fire["AcresBurned"] }.compact.reduce(&:+)
-  fires << { "Total" => total }
-end
+core_counties_table = all_counties_table.select { |k, v| k.in?(core_counties_list) }
 
 puts "\n\nCore County Totals:".upcase
-core_counties_table.each do |county, fires|
-  puts "#{county}: #{fires.last["Total"]}"
-end
-
-all_counties_table = {}
-table.each do |fire|
-  next unless fire["Counties"] && fire["Counties"].any?
-  fire["Counties"].each do |fire_county|
-    all_counties_table[fire_county] ||= []
-    all_counties_table[fire_county] << fire.dup
-  end
-end
-
-all_counties_table.each do |county, fires|
-  total = fires.map { |fire| (fire["AcresBurned"] || 0) }.compact.reduce(&:+)
-  fires << { "Total" => total }
+core_counties_table.each do |_, county|
+  puts "#{county.name}: #{county.total_acres_burned}"
 end
 
 puts "\n\nAll County Totals:".upcase
-all_counties_table.each do |county, fires|
-  puts "#{county}: #{fires.last["Total"]}"
+all_counties_table.each do |_, county|
+  puts "#{county.name}: #{county.total_acres_burned}"
 end
