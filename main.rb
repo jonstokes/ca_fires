@@ -72,3 +72,10 @@ all_counties_table.each do |_, county|
 end
 grand_total = all_counties_table.map { |_, county| county.total_acres_burned }.reduce(&:+)
 puts "TOTAL ACRES BURNED: #{grand_total}"
+
+puts "All county list in HTML"
+puts "<ol>"
+all_counties_table.each do |_, county|
+  puts "<li>#{county.name}: #{county.total_acres_burned}</li> "
+end
+puts "</ol>"
