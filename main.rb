@@ -59,8 +59,12 @@ puts "\n\nCore County Totals:".upcase
 core_counties_table.each do |_, county|
   puts "#{county.name}: #{county.total_acres_burned}"
 end
+grand_total = core_counties_table.map { |_, county| county.total_acres_burned }.reduce(&:+)
+puts "TOTAL ACRES BURNED: #{grand_total}"
 
 puts "\n\nAll County Totals:".upcase
 all_counties_table.each do |_, county|
   puts "#{county.name}: #{county.total_acres_burned}"
 end
+grand_total = all_counties_table.map { |_, county| county.total_acres_burned }.reduce(&:+)
+puts "TOTAL ACRES BURNED: #{grand_total}"
